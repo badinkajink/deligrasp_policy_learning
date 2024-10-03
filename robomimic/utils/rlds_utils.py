@@ -4,6 +4,8 @@ from typing import Any, Dict
 import tensorflow as tf
 import torch
 import tensorflow_graphics.geometry.transformation as tfg
+import math
+import numpy as np
 
 def filter_success(trajectory: dict[str, any]):
     # only keep trajectories that have "success" in the file path
@@ -16,12 +18,54 @@ def filter_success(trajectory: dict[str, any]):
 def euler_to_rmat(euler):
     return tfg.rotation_matrix_3d.from_euler(euler)
 
+def rpy_to_rotation_mtrx(theta):
+    # Calculates Rotation Matrix given euler angles
+    R_x = np.array(
+        [
+            [1, 0, 0],
+            [0, np.cos(theta[0]), -np.sin(theta[0])],
+            [0, np.sin(theta[0]), np.cos(theta[0])],
+        ]
+    )
+    R_y = np.array(
+        [
+            [np.cos(theta[1]), 0, np.sin(theta[1])],
+            [0, 1, 0],
+            [-np.sin(theta[1]), 0, np.cos(theta[1])],
+        ]
+    )
+    R_z = np.array(
+        [
+            [np.cos(theta[2]), -np.sin(theta[2]), 0],
+            [np.sin(theta[2]), np.cos(theta[2]), 0],
+            [0, 0, 1],
+        ]
+    )
+    R = np.dot(R_z, np.dot(R_y, R_x))
+    return R
+
 
 def mat_to_rot6d(mat):
     r6 = mat[..., :2, :]
     r6_0, r6_1 = r6[..., 0, :], r6[..., 1, :]
     r6_flat = tf.concat([r6_0, r6_1], axis=-1)
     return r6_flat
+
+def deligrasp_dataset_transform(trajectory: Dict[str, Any]) -> Dict[str, Any]:
+    # every input feature is batched, ie has leading batch dimension
+    T = trajectory["action"][:3]
+    # R = mat_to_rot6d(euler_to_rmat(trajectory["action"][3:6]))
+    R = mat_to_rot6d(rpy_to_rotation_mtrx(trajectory["action"][3:6]))
+    trajectory["action"] = tf.concat(
+        (
+            tf.expand_dims(T, axis=-1),
+            tf.expand_dims(R, axis=-1),
+            tf.expand_dims(trajectory["action"][6], axis=-1), # delta gripper position
+            tf.expand_dims(trajectory["action"][7], axis=-1), # delta applied force
+        ),
+        axis=-1,
+    )
+    return trajectory
 
 
 def droid_dataset_transform(trajectory: Dict[str, Any]) -> Dict[str, Any]:
