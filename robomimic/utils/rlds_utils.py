@@ -77,6 +77,7 @@ def robomimic_dg_transform(trajectory: Dict[str, Any]) -> Dict[str, Any]:
                 tf.cast(trajectory["observation"]["image_primary"], tf.float32) / 255.,
             "camera/image/varied_camera_2_left_image": 
                 tf.cast(trajectory["observation"]["image_secondary"], tf.float32) / 255.,
+            # "raw_language": tf.as_string(trajectory["task"]["language_instruction"]),
             "raw_language": trajectory["task"]["language_instruction"],
             "robot_state/cartesian_position": trajectory["observation"]["proprio"][..., 6:12],
             "robot_state/gripper_position": trajectory["observation"]["proprio"][..., -4:],
@@ -111,6 +112,8 @@ class TorchRLDSDataset(torch.utils.data.IterableDataset):
 
     def __iter__(self):
         for sample in self._rlds_dataset.as_numpy_iterator():
+            rl = sample['obs']['raw_language']
+            sample['obs']['raw_language'] = rl.tolist()
             yield sample
 
     def __len__(self):
