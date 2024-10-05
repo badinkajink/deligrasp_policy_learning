@@ -222,7 +222,7 @@ def get_shape_metadata_from_dataset(dataset_path, batch, action_keys, all_obs_ke
             if (config.train.goal_mode is not None) and (ObsUtils.OBS_KEYS_TO_MODALITIES[k] == 'rgb'):
                 all_shapes[k][0] *= 2
         f.close()
-    elif ds_format == "droid_rlds":
+    elif ds_format == "droid_rlds" or ds_format == "dg_rlds":
         all_shapes = OrderedDict()
         for k in [
             "robot_state/cartesian_position",
