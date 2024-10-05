@@ -46,7 +46,7 @@ from robomimic.algo import algo_factory, RolloutPolicy
 from robomimic.utils.log_utils import PrintLogger, DataLogger, flush_warnings
 from robomimic.utils.rlds_utils import droid_dataset_transform, robomimic_transform, DROID_TO_RLDS_OBS_KEY_MAP, DROID_TO_RLDS_LOW_DIM_OBS_KEY_MAP, TorchRLDSDataset
 
-from octo.data.dataset import make_dataset_from_rlds, make_interleaved_dataset
+from octo.data.dataset import make_dataset_from_rlds, make_interleaved_dataset, make_single_dataset
 from octo.data.utils.data_utils import combine_dataset_statistics
 from octo.utils.spec import ModuleSpec
 
@@ -153,6 +153,86 @@ def train(config, device):
         rlds_dataset_stats = dataset.dataset_statistics[0] if isinstance(dataset.dataset_statistics, list) else dataset.dataset_statistics
         action_stats = ActionUtils.get_action_stats_dict(rlds_dataset_stats["action"], config.train.action_keys, config.train.action_shapes)
         action_normalization_stats = action_stats_to_normalization_stats(action_stats, action_config)
+        dataset = dataset.map(robomimic_transform, num_parallel_calls=config.train.traj_transform_threads)
+
+        pytorch_dataset = TorchRLDSDataset(dataset)
+        train_loader = DataLoader(
+            pytorch_dataset,
+            batch_size=config.train.batch_size,
+            num_workers=0,  # important to keep this to 0 so PyTorch does not mess with the parallelism
+        )
+
+        # For RLDS, get batch from train loader to compute shapes
+        data_loader_iter = iter(train_loader)
+        rlds_batch = next(data_loader_iter)
+
+        shape_meta = FileUtils.get_shape_metadata_from_dataset(
+            dataset_path=None,
+            batch=rlds_batch,
+            action_keys=config.train.action_keys,
+            all_obs_keys=config.all_obs_keys,
+            ds_format=ds_format,
+            verbose=True,
+            config = config
+        )
+    elif ds_format == "dg_rlds":
+        # # load basic metadata from training file
+        # print("\n============= Loaded Environment Metadata =============")
+        env_meta = FileUtils.get_env_metadata_from_dataset(dataset_path=None, ds_format=ds_format)
+        obs_normalization_stats = None
+
+        # FOR RLDS
+        tf.config.set_visible_devices([], "GPU")
+
+        obs_modalities = config.observation.modalities.obs.rgb
+        # NOTE: Must be 2 cam for now, can clean this up later
+        assert(len(obs_modalities) == 2)
+        ac_dim = sum([ac_comp[1] for ac_comp in config.train.action_shapes])
+        action_config = config.train.action_config
+        is_abs_action = [True] * ac_dim
+
+        BASE_DATASET_KWARGS = {
+                "name": "deligrasp_dataset",
+                "data_dir": config.train.data_path,
+                "image_obs_keys": {"primary": "image", "secondary": "wrist_image"},
+                "proprio_obs_key": "state",
+                "language_key": "language_instruction",
+                "action_proprio_normalization_type": "bounds",
+                "action_normalization_mask": [True] * 9 + [False] * 2,      # don't normalize final (gripper) dimension
+                "standardize_fn": ModuleSpec.create("robomimic.utils.rlds_utils:deligrasp_dataset_transform"),
+         }
+
+        # Compute combined normalization stats
+        dataset_statistics = make_dataset_from_rlds(**BASE_DATASET_KWARGS, train=True)
+
+        dataset = make_single_dataset(
+            BASE_DATASET_KWARGS,
+            train=True,
+            dataset_statistics=dataset_statistics,
+            traj_transform_kwargs=dict(
+                # NOTE(Ashwin): window_size and future_action_window_size may break if 
+                # not using diffusion policy
+                window_size=config.algo.horizon.observation_horizon,
+                action_horizon=config.algo.horizon.prediction_horizon-1,
+                subsample_length=config.train.subsample_length,
+                skip_unlabeled=True,    # skip all trajectories without language
+            ),
+            frame_transform_kwargs=dict(
+                image_augment_kwargs=dict(
+                ),
+                resize_size=dict(
+                    primary=config.observation.image_dim,
+                    secondary=config.observation.image_dim,
+                ),
+                num_parallel_calls=config.train.num_parallel_calls,
+            ),
+        )
+        # Note: If we have separated statistics for multiple datasets, use the first one (assumed to be DROID)
+        # Otherwise, use the combined dataset statistics.
+        # rlds_dataset_stats = dataset.dataset_statistics
+        # action_stats = ActionUtils.get_action_stats_dict(rlds_dataset_stats["action"], config.train.action_keys, config.train.action_shapes)
+        # action_normalization_stats = action_stats_to_normalization_stats(action_stats, action_config)
+        action_normalization_stats = None
         dataset = dataset.map(robomimic_transform, num_parallel_calls=config.train.traj_transform_threads)
 
         pytorch_dataset = TorchRLDSDataset(dataset)
