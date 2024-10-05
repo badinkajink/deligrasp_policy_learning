@@ -65,7 +65,7 @@ def robomimic_transform(trajectory: Dict[str, Any]) -> Dict[str, Any]:
             "raw_language": trajectory["task"]["language_instruction"],
             "robot_state/cartesian_position": trajectory["observation"]["proprio"][..., :6],
             "robot_state/gripper_position": trajectory["observation"]["proprio"][..., -1:],
-            "pad_mask": trajectory["observation"]["pad_mask"][..., None],
+            "pad_mask": trajectory["observation"]["timestep_pad_mask"][..., None],
         },
         "actions": trajectory["action"][1:],
     }
@@ -83,7 +83,7 @@ def robomimic_dg_transform(trajectory: Dict[str, Any]) -> Dict[str, Any]:
             "robot_state/gripper_position": trajectory["observation"]["proprio"][..., -4:],
             "robot_state/applied_force": trajectory["observation"]["proprio"][..., -3:],
             "robot_state/contact_force": trajectory["observation"]["proprio"][..., -2:],
-            # "pad_mask": trajectory["observation"]["pad_mask"][..., None],
+            "pad_mask": trajectory["observation"]["timestep_pad_mask"][..., None],
         },
         "actions": trajectory["action"][1:],
     }
