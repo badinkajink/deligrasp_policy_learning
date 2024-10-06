@@ -10,14 +10,14 @@ from collections import OrderedDict
 # Note: Assumes naming of dataset in "datasets" for the full DROID dataset is
 # droid
 
-DATA_PATH = ""    # UPDATE WITH PATH TO RLDS DATASETS
-EXP_LOG_PATH = "" # UPDATE WITH PATH TO DESIRED LOGGING DIRECTORY
+DATA_PATH = "C:/Users/willi/tensorflow_datasets"    # UPDATE WITH PATH TO RLDS DATASETS
+EXP_LOG_PATH = "C:/workspace/droid_policy_learning/logs" # UPDATE WITH PATH TO DESIRED LOGGING DIRECTORY
 EXP_NAMES = OrderedDict(
     [
         # Note: you can add co-training dataset here appending
         # a new dataset to "datasets" and adjusting "sample_weights"
         # accordingly
-        ("droid", {"datasets": ["droid"],
+        ("droid", {"datasets": ["droid_100"],
                    "sample_weights": [1]})                                    
     ])
 
@@ -50,7 +50,7 @@ def make_generator_helper(args):
         key="train.num_epochs",
         name="",
         group=-1,
-        values=[100000],
+        values=[1],
     )
 
     generator.add_param(
@@ -64,14 +64,14 @@ def make_generator_helper(args):
         key="train.shuffle_buffer_size",
         name="",
         group=-1,
-        values=[500000],
+        values=[1000],
     )
 
     generator.add_param(
         key="train.batch_size",
         name="bz",
         group=1212111,
-        values=[128],
+        values=[16],
         hidename=False,
     )
 
@@ -80,7 +80,7 @@ def make_generator_helper(args):
         name="subsample_length",
         group=7070707,
         values=[
-            100
+            50
         ],
         hidename=True,
     )
@@ -353,97 +353,6 @@ def make_generator_helper(args):
             ],
             hidename=False,
         )
-
-
-    elif args.env == "kitchen":
-        generator.add_param(
-            key="train.data",
-            name="ds",
-            group=2,
-            values=[
-                # [{"path": "~/datasets/kitchen/prior/human_demos/pnp_table_to_cab/bowls/20230816_im84.hdf5", "filter_key": "100_demos"}],
-                [{"path": "~/datasets/kitchen/prior/human_demos/pnp_table_to_cab/all/20230806_im84.hdf5", "filter_key": "100_demos"}],
-                # [{"path": "~/datasets/kitchen/prior/mimicgen/pnp_table_to_cab/viraj_mg_2023-08-10-20-31-14/demo_im84.hdf5", "filter_key": "100_demos"}],
-                # [{"path": "~/datasets/kitchen/prior/mimicgen/pnp_table_to_cab/viraj_mg_2023-08-10-20-31-14/demo_im84.hdf5", "filter_key": "1000_demos"}],
-            ],
-            value_names=[
-                # "bowls-human-100",
-                "human-100",
-                # "mg-100",
-                # "mg-1000",
-            ],
-        )
-        
-        # update env config to use absolute action control
-        generator.add_param(
-            key="experiment.env_meta_update_dict",
-            name="",
-            group=-1,
-            values=[
-                {"env_kwargs": {"controller_configs": {"control_delta": False}}}
-            ],
-        )
-
-        generator.add_param(
-            key="train.action_keys",
-            name="ac_keys",
-            group=-1,
-            values=[
-                [
-                    "action_dict/abs_pos",
-                    "action_dict/abs_rot_6d",
-                    "action_dict/gripper",
-                    "action_dict/base_mode",
-                    # "actions",
-                ],
-            ],
-            value_names=[
-                "abs",
-            ],
-            hidename=True,
-        )
-    elif args.env == "square":
-        generator.add_param(
-            key="train.data",
-            name="ds",
-            group=2,
-            values=[
-                [
-                    {"path": "~/datasets/square/ph/square_ph_abs_tmp.hdf5"}, # replace with your own path
-                ],
-            ],
-            value_names=[
-                "square",
-            ],
-        )
-
-        # update env config to use absolute action control
-        generator.add_param(
-            key="experiment.env_meta_update_dict",
-            name="",
-            group=-1,
-            values=[
-                {"env_kwargs": {"controller_configs": {"control_delta": False}}}
-            ],
-        )
-        
-        generator.add_param(
-            key="train.action_keys",
-            name="ac_keys",
-            group=-1,
-            values=[
-                [
-                    "action_dict/abs_pos",
-                    "action_dict/abs_rot_6d",
-                    "action_dict/gripper",
-                    # "actions",
-                ],
-            ],
-            value_names=[
-                "abs",
-            ],
-        )
-
 
     else:
         raise ValueError

@@ -17,7 +17,7 @@ EXP_NAMES = OrderedDict(
         # Note: you can add co-training dataset here appending
         # a new dataset to "datasets" and adjusting "sample_weights"
         # accordingly
-        ("deligrasp", {"datasets": ["deligrasp_dataset"],
+        ("dg_noforce", {"datasets": ["deligrasp_dataset"],
                    "sample_weights": [1]})                                    
     ])
 
@@ -42,7 +42,7 @@ def make_generator_helper(args):
         name="",
         group=-1,
         values=[
-            "dg_rlds"
+            "dg_rlds_noforce"
         ],
     )
 
@@ -233,7 +233,6 @@ def make_generator_helper(args):
                     "action/rel_pos",
                     "action/rel_rot_6d",
                     "action/gripper_position",
-                    "action/gripper_force",
                 ],
             ],
             value_names=[
@@ -249,7 +248,6 @@ def make_generator_helper(args):
                 [
                     (1, 3),
                     (1, 6),
-                    (1, 1),
                     (1, 1),
                 ],
             ],
@@ -324,8 +322,7 @@ def make_generator_helper(args):
             name="ldkeys",
             group=24986,
             values=[
-                ["robot_state/cartesian_position", "robot_state/gripper_position", 
-                 "robot_state/applied_force", "robot_state/contact_force"],
+                ["robot_state/cartesian_position", "robot_state/gripper_position"],
             ],
             value_names=[
                 "proprio-lang",

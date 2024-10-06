@@ -59,12 +59,14 @@ def set_env_settings(generator, args):
                 False
             ],
         )
-        generator.add_param(
-            key="experiment.save.every_n_epochs",
-            name="",
-            group=-1,
-            values=[50],
-        )
+        if "experiment.save.every_n_epochs" not in generator.parameters:
+            generator.add_param(
+                key="experiment.save.every_n_epochs",
+                name="",
+                group=-1,
+                values=[25],
+            )     
+   
         generator.add_param(
             key="experiment.mse.enabled",
             name="",
@@ -153,51 +155,52 @@ def set_env_settings(generator, args):
         )
         
         # here, we list how each action key should be treated (normalized etc)
-        generator.add_param(
-            key="train.action_config",
-            name="",
-            group=-1,
-            values=[
-                {
-                    "action/cartesian_position":{
-                        "normalization": "min_max",
-                    },
-                    "action/abs_pos":{
-                        "normalization": "min_max",
-                    },
-                    "action/abs_rot_6d":{
-                        "normalization": "min_max",
-                        "format": "rot_6d",
-                        "convert_at_runtime": "rot_euler",
-                    },
-                    "action/abs_rot_euler":{
-                        "normalization": "min_max",
-                        "format": "rot_euler",
-                    },
-                    "action/gripper_position":{
-                        "normalization": "min_max",
-                    },
-                    "action/cartesian_velocity":{
-                        "normalization": None,
-                    },
-                    "action/rel_pos":{
-                        "normalization": None,
-                    },
-                    "action/rel_rot_6d":{
-                        "format": "rot_6d",
-                        "normalization": None,
-                        "convert_at_runtime": "rot_euler",
-                    },
-                    "action/rel_rot_euler":{
-                        "format": "rot_euler",
-                        "normalization": None,
-                    },
-                    "action/gripper_velocity":{
-                        "normalization": None,
-                    },
-                }
-            ],
-        )
+        if "train.action_config" not in generator.parameters:
+            generator.add_param(
+                key="train.action_config",
+                name="",
+                group=-1,
+                values=[
+                    {
+                        "action/cartesian_position":{
+                            "normalization": "min_max",
+                        },
+                        "action/abs_pos":{
+                            "normalization": "min_max",
+                        },
+                        "action/abs_rot_6d":{
+                            "normalization": "min_max",
+                            "format": "rot_6d",
+                            "convert_at_runtime": "rot_euler",
+                        },
+                        "action/abs_rot_euler":{
+                            "normalization": "min_max",
+                            "format": "rot_euler",
+                        },
+                        "action/gripper_position":{
+                            "normalization": "min_max",
+                        },
+                        "action/cartesian_velocity":{
+                            "normalization": None,
+                        },
+                        "action/rel_pos":{
+                            "normalization": None,
+                        },
+                        "action/rel_rot_6d":{
+                            "format": "rot_6d",
+                            "normalization": None,
+                            "convert_at_runtime": "rot_euler",
+                        },
+                        "action/rel_rot_euler":{
+                            "format": "rot_euler",
+                            "normalization": None,
+                        },
+                        "action/gripper_velocity":{
+                            "normalization": None,
+                        },
+                    }
+                ],
+            )
         generator.add_param(
             key="train.dataset_keys",
             name="",
@@ -635,12 +638,13 @@ def set_mod_settings(generator, args):
                 values=[40],
             )
 
-        generator.add_param(
-            key="experiment.epoch_every_n_steps",
-            name="",
-            group=-1,
-            values=[500],
-        )
+        if "experiment.epoch_every_n_steps" not in generator.parameters:
+            generator.add_param(
+                key="experiment.epoch_every_n_steps",
+                name="",
+                group=-1,
+                values=[500],
+            )
         if "train.num_data_workers" not in generator.parameters:
             generator.add_param(
                 key="train.num_data_workers",

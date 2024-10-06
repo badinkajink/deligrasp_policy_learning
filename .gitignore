@@ -1,3 +1,10 @@
-robomimic/__pycache__/
+robomimic/__pycache__
+robomimic/utils/__pycache__
 */*/__pycache__/
 */*/*/__pycache__/
+robomimic/scripts/macros_private.py
+robomimic/macros_private.py
+bonk/*
+bonk
+logs/*
+logs

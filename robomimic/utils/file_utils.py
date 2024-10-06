@@ -222,7 +222,49 @@ def get_shape_metadata_from_dataset(dataset_path, batch, action_keys, all_obs_ke
             if (config.train.goal_mode is not None) and (ObsUtils.OBS_KEYS_TO_MODALITIES[k] == 'rgb'):
                 all_shapes[k][0] *= 2
         f.close()
-    elif ds_format == "droid_rlds" or ds_format == "dg_rlds":
+    elif ds_format == "droid_rlds":
+        all_shapes = OrderedDict()
+        for k in [
+            "robot_state/cartesian_position",
+            "robot_state/gripper_position",
+            "camera/image/varied_camera_1_left_image",
+            # "camera/image/varied_camera_1_right_image",
+            "camera/image/varied_camera_2_left_image",
+        ]:
+            if k in batch["obs"]:
+                initial_shape = batch["obs"][k].shape[2:]
+
+                if len(initial_shape) == 0:
+                    initial_shape = (1,)
+
+                all_shapes[k] = ObsUtils.get_processed_shape(
+                    obs_modality=ObsUtils.OBS_KEYS_TO_MODALITIES[k],
+                    input_shape=initial_shape,
+                )
+    elif ds_format == "dg_rlds":
+        all_shapes = OrderedDict()
+        for k in [
+            "robot_state/cartesian_position",
+            "robot_state/gripper_position",
+            "robot_state/applied_force",
+            "robot_state/contact_force",
+            "camera/image/varied_camera_1_left_image",
+            # "camera/image/varied_camera_1_right_image",
+            "camera/image/varied_camera_2_left_image",
+        ]:
+            if k in batch["obs"]:
+                initial_shape = batch["obs"][k].shape[2:]
+
+                if len(initial_shape) == 0:
+                    initial_shape = (1,)
+
+                all_shapes[k] = ObsUtils.get_processed_shape(
+                    obs_modality=ObsUtils.OBS_KEYS_TO_MODALITIES[k],
+                    input_shape=initial_shape,
+                )
+
+        shape_meta = {'ac_dim': batch["actions"].shape[-1]}
+    elif ds_format == "dg_rlds_noforce":
         all_shapes = OrderedDict()
         for k in [
             "robot_state/cartesian_position",
@@ -243,6 +285,7 @@ def get_shape_metadata_from_dataset(dataset_path, batch, action_keys, all_obs_ke
                 )
 
         shape_meta = {'ac_dim': batch["actions"].shape[-1]}
+
     else:
         raise ValueError
 
