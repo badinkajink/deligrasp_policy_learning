@@ -50,7 +50,7 @@ def make_generator_helper(args):
         key="train.num_epochs",
         name="",
         group=-1,
-        values=[100],
+        values=[50],
     )
 
     generator.add_param(
@@ -64,7 +64,7 @@ def make_generator_helper(args):
         key="experiment.save.every_n_epochs",
         name="",
         group=-1,
-        values=[20],
+        values=[10],
     )
 
     generator.add_param(
@@ -78,7 +78,7 @@ def make_generator_helper(args):
         key="train.shuffle_buffer_size",
         name="",
         group=-1,
-        values=[1000],
+        values=[200],
     )
 
     generator.add_param(

@@ -44,7 +44,7 @@ from robomimic.utils.dataset import action_stats_to_normalization_stats
 from robomimic.config import config_factory
 from robomimic.algo import algo_factory, RolloutPolicy
 from robomimic.utils.log_utils import PrintLogger, DataLogger, flush_warnings
-from robomimic.utils.rlds_utils import droid_dataset_transform, dg_dataset_transform, robomimic_transform, robomimic_dg_transform, DROID_TO_RLDS_OBS_KEY_MAP, DROID_TO_RLDS_LOW_DIM_OBS_KEY_MAP, DG_TO_RLDS_OBS_KEY_MAP, DG_TO_RLDS_LOW_DIM_OBS_KEY_MAP, TorchRLDSDataset
+from robomimic.utils.rlds_utils import droid_dataset_transform, dg_dataset_transform, robomimic_transform, robomimic_dg_transform, dg_noforce_dataset_transform, DROID_TO_RLDS_OBS_KEY_MAP, DROID_TO_RLDS_LOW_DIM_OBS_KEY_MAP, DG_TO_RLDS_OBS_KEY_MAP, DG_TO_RLDS_LOW_DIM_OBS_KEY_MAP, TorchRLDSDataset
 
 from octo.data.dataset import make_dataset_from_rlds, make_interleaved_dataset
 from octo.data.utils.data_utils import combine_dataset_statistics
@@ -105,7 +105,7 @@ def train(config, device):
                 "action_proprio_normalization_type": "bounds",
                 "absolute_action_mask": is_abs_action if ds_format == "dg_rlds" else None, # dg is relative actions
                 "action_normalization_mask": is_abs_action if ds_format == "dg_rlds" else None, # dg is relative actions
-                "standardize_fn": dg_dataset_transform,
+                "standardize_fn": dg_dataset_transform if ds_format == "dg_rlds" else dg_noforce_dataset_transform,
          }
 
         dataset_names = config.train.dataset_names
@@ -150,7 +150,7 @@ def train(config, device):
         rlds_dataset_stats = dataset.dataset_statistics[0] if isinstance(dataset.dataset_statistics, list) else dataset.dataset_statistics
         action_stats = ActionUtils.get_action_stats_dict(rlds_dataset_stats["action"], config.train.action_keys, config.train.action_shapes)
         action_normalization_stats = action_stats_to_normalization_stats(action_stats, action_config)
-        dataset = dataset.map(robomimic_transform, num_parallel_calls=config.train.traj_transform_threads)
+        dataset = dataset.map(robomimic_dg_transform, num_parallel_calls=config.train.traj_transform_threads)
 
         pytorch_dataset = TorchRLDSDataset(dataset)
         train_loader = DataLoader(
@@ -162,6 +162,10 @@ def train(config, device):
         # For RLDS, get batch from train loader to compute shapes
         data_loader_iter = iter(train_loader)
         rlds_batch = next(data_loader_iter)
+        print(f"Train: rlds_batch keys: {rlds_batch.keys()}")
+        print(f"Train: rlds_batch obs keys: {rlds_batch['obs'].keys()}")
+        print(f"Train: rlds_batch action shape: {rlds_batch['actions'].shape}")
+
 
         shape_meta = FileUtils.get_shape_metadata_from_dataset(
             dataset_path=None,
@@ -360,6 +364,7 @@ def train(config, device):
         log_tb=config.experiment.logging.log_tb,
         log_wandb=config.experiment.logging.log_wandb,
     )
+    print(f"Train: obs_key_shapes: {shape_meta['all_shapes']}")
     model = algo_factory(
         algo_name=config.algo_name,
         config=config,

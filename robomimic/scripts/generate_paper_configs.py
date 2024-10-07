@@ -251,7 +251,9 @@ def modify_config_for_dataset(config, task_name, dataset_type, hdf5_type, base_d
             # modify observation names for real robot datasets
             config.observation.modalities.obs.low_dim = [
                 "ee_pose", 
-                "gripper_position", 
+                "gripper_position",
+                "applied_force",
+                "contact_force",
             ]
 
             if task_name == "tool_hang_real":
