@@ -695,7 +695,9 @@ class RolloutPolicy(object):
             action_keys = self.policy.global_config.train.action_keys
             action_shapes = {k: self.action_normalization_stats[k]["offset"].shape[1:] for k in self.action_normalization_stats}
             ac_dict = AcUtils.vector_to_action_dict(ac, action_shapes=action_shapes, action_keys=action_keys)
+            print(f"unnormalized action: {ac_dict}")
             ac_dict = ObsUtils.unnormalize_dict(ac_dict, normalization_stats=self.action_normalization_stats)
+            print(f"normalized action: {ac_dict}")
             action_config = self.policy.global_config.train.action_config
             for key, value in ac_dict.items():
                 this_format = action_config[key].get("format", None)
