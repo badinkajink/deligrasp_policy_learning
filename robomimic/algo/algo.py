@@ -146,16 +146,26 @@ class Algo(object):
                 specified by the obs config), e.g., {"obs": ["rgb", "proprio"], "goal": ["proprio"]}
             obs_key_shapes (dict): dict of observation key shapes, e.g., {"rgb": [3, 224, 224]}
         """
+        print(f"Algo: _create_shapes")
         # determine shapes
         self.obs_shapes = OrderedDict()
         self.goal_shapes = OrderedDict()
         self.subgoal_shapes = OrderedDict()
 
+        print(f"Algo: Attempt 3")
+        print(f"Algo: obs_keys: {obs_keys}")
+        print(f"Algo: obs_key_shapes: {obs_key_shapes}")
+        print(f"Algo: modalities: {self.obs_config.modalities}")
+        print(f"Algo: modality values: {self.obs_config.modalities.obs.values()}")
+        print(f"Algo: whatever this is: {[obs_key for modality in self.obs_config.modalities.obs.values() for obs_key in modality]}")
         # We check across all modality groups (obs, goal, subgoal), and see if the inputted observation key exists
         # across all modalitie specified in the config. If so, we store its corresponding shape internally
         for k in obs_key_shapes:
+            print(f"Algo: now on key: {k}")
+            print(f"Algo: checking obs")
             if "obs" in self.obs_config.modalities and k in [obs_key for modality in self.obs_config.modalities.obs.values() for obs_key in modality]:
                 self.obs_shapes[k] = obs_key_shapes[k]
+                print(f"Adding obs: obs_shapes[{k}]: {obs_key_shapes[k]}")
             if "goal" in self.obs_config.modalities and k in [obs_key for modality in self.obs_config.modalities.goal.values() for obs_key in modality]:
                 self.goal_shapes[k] = obs_key_shapes[k]
             if "subgoal" in self.obs_config.modalities and k in [obs_key for modality in self.obs_config.modalities.subgoal.values() for obs_key in modality]:
@@ -695,9 +705,11 @@ class RolloutPolicy(object):
                     if conversion_format == "rot_axis_angle":
                         rot = TorchUtils.rot_6d_to_axis_angle(rot_6d=rot_6d).squeeze().numpy()
                     elif conversion_format == "rot_euler":
-                        rot = TorchUtils.rot_6d_to_euler_angles(rot_6d=rot_6d, convention="XYZ").squeeze().numpy()
+                        # rot = TorchUtils.rot_6d_to_euler_angles(rot_6d=rot_6d, convention="XYZ").squeeze().numpy()
+                        rot = TorchUtils.rot_6d_to_euler_angles(rot_6d=rot_6d).squeeze().numpy()
                     else:
                         raise ValueError
                     ac_dict[key] = rot
+            print(ac_dict)
             ac = AcUtils.action_dict_to_vector(ac_dict, action_keys=action_keys)
         return ac

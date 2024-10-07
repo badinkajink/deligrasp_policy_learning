@@ -70,6 +70,7 @@ class DiffusionPolicyUNet(PolicyAlgo):
         # set up different observation groups for @MIMO_MLP
         observation_group_shapes = OrderedDict()
         observation_group_shapes["obs"] = OrderedDict(self.obs_shapes)
+        print("obs_shapes", self.obs_shapes)
         encoder_kwargs = ObsUtils.obs_encoder_kwargs_from_config(self.obs_config.encoder)
         
         obs_encoder = ObsNets.ObservationGroupEncoder(
@@ -424,8 +425,16 @@ class DiffusionPolicyUNet(PolicyAlgo):
             if "raw" in k:
                 continue
             # first two dimensions should be [B, T] for inputs
+            # validate ndmi
+            print(f"key: {k}")
+            print(f"ndim: {inputs['obs'][k].ndim}, shape: {inputs['obs'][k].shape}")
+            print(f"len shapes: {len(self.obs_shapes[k])} shape: {self.obs_shapes[k]}")
             assert inputs['obs'][k].ndim - 2 == len(self.obs_shapes[k])
         obs_features = TensorUtils.time_distributed({"obs":inputs["obs"]}, nets['policy']['obs_encoder'].module, inputs_as_kwargs=True)
+        print(f"DP: after time_distributed")
+        print(f"key: {k}")
+        print(f"ndim: {inputs['obs'][k].ndim}, shape: {inputs['obs'][k].shape}")
+        print(f"len shapes: {len(self.obs_shapes[k])} shape: {self.obs_shapes[k]}")
         assert obs_features.ndim == 3  # [B, T, D]
         B = obs_features.shape[0]
 
