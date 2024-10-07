@@ -37,6 +37,20 @@ def dg_dataset_transform(trajectory: Dict[str, Any]) -> Dict[str, Any]:
     )
     return trajectory
 
+def dg_noforce_dataset_transform(trajectory: Dict[str, Any]) -> Dict[str, Any]:
+    T = trajectory["action_dict"]["cartesian_position"][:, :3]
+    R = mat_to_rot6d(euler_to_rmat(trajectory["action_dict"]["cartesian_position"][:, 3:6]))
+    trajectory["action"] = tf.concat(
+        (
+            T,
+            R,
+            trajectory["action_dict"]["gripper_position"],
+        ),
+        axis=-1,
+    )
+    return trajectory
+
+
 def droid_dataset_transform(trajectory: Dict[str, Any]) -> Dict[str, Any]:
     # every input feature is batched, ie has leading batch dimension
     T = trajectory["action_dict"]["cartesian_position"][:, :3]

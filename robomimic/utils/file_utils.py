@@ -252,10 +252,14 @@ def get_shape_metadata_from_dataset(dataset_path, batch, action_keys, all_obs_ke
             # "camera/image/varied_camera_1_right_image",
             "camera/image/varied_camera_2_left_image",
         ]:
+            print(f"file_utils: Shape Meta: batch keys {batch['obs'].keys()} ")
             if k in batch["obs"]:
+                print(f"file_utils: Shape Meta: on key {k} ")
+                print(f"file_utils: Shape Meta: shape {batch['obs'][k].shape}")
                 initial_shape = batch["obs"][k].shape[2:]
 
                 if len(initial_shape) == 0:
+                    print(f"file_utils: Shape Meta: reshaping {k} from {initial_shape} to (1,)")
                     initial_shape = (1,)
 
                 all_shapes[k] = ObsUtils.get_processed_shape(
@@ -284,6 +288,7 @@ def get_shape_metadata_from_dataset(dataset_path, batch, action_keys, all_obs_ke
                     input_shape=initial_shape,
                 )
 
+        print(f"file_utils: Shape Meta: batch action {batch['actions'].shape[-1]} ")
         shape_meta = {'ac_dim': batch["actions"].shape[-1]}
 
     else:

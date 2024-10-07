@@ -278,6 +278,7 @@ def center_crop(im, t_h, t_w):
     Returns:
         im (np.array or torch.Tensor): center cropped image
     """
+    print(f'center_crop: im.shape: {im.shape}')
     assert(im.shape[-3] >= t_h and im.shape[-2] >= t_w)
     assert(im.shape[-1] in [1, 3, 6]) 
     crop_h = int((im.shape[-3] - t_h) / 2)
