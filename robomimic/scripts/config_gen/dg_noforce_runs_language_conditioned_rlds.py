@@ -181,10 +181,10 @@ def make_generator_helper(args):
                         "format": "rot_euler",
                     },
                     "action/gripper_position":{
-                        "normalization": "min_max",
+                        "normalization": None,
                     },
                     "action/gripper_force":{
-                        "normalization": "min_max",
+                        "normalization": None,
                     },
                     "action/cartesian_velocity":{
                         "normalization": None,
