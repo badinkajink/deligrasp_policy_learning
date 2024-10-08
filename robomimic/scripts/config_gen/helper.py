@@ -137,22 +137,23 @@ def set_env_settings(generator, args):
                 ],
             )
         # remove spatial softmax by default for droid dataset
-        generator.add_param(
-            key="observation.encoder.rgb.core_kwargs.pool_class",
-            name="",
-            group=-1,
-            values=[
-                None
-            ],
-        )
-        generator.add_param(
-            key="observation.encoder.rgb.core_kwargs.pool_kwargs",
-            name="",
-            group=-1,
-            values=[
-                None
-            ],
-        )
+        if "observation.encoder.rgb.core_kwargs.pool_class" not in generator.parameters:
+            generator.add_param(
+                key="observation.encoder.rgb.core_kwargs.pool_class",
+                name="",
+                group=-1,
+                values=[None],
+            )
+
+        if "observation.encoder.rgb.core_kwargs.pool_kwargs" not in generator.parameters:
+            generator.add_param(
+                key="observation.encoder.rgb.core_kwargs.pool_kwargs",
+                name="",
+                group=-1,
+                values=[
+                    None
+                ],
+            )
         
         # here, we list how each action key should be treated (normalized etc)
         if "train.action_config" not in generator.parameters:

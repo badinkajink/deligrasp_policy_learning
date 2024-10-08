@@ -70,9 +70,10 @@ class DiffusionPolicyUNet(PolicyAlgo):
         # set up different observation groups for @MIMO_MLP
         observation_group_shapes = OrderedDict()
         observation_group_shapes["obs"] = OrderedDict(self.obs_shapes)
-        print("obs_shapes", self.obs_shapes)
+        # print("obs_shapes", self.obs_shapes)
         encoder_kwargs = ObsUtils.obs_encoder_kwargs_from_config(self.obs_config.encoder)
         
+        # print(f"DP: create networks: creating obs encoder")
         obs_encoder = ObsNets.ObservationGroupEncoder(
             observation_group_shapes=observation_group_shapes,
             encoder_kwargs=encoder_kwargs,
@@ -83,8 +84,19 @@ class DiffusionPolicyUNet(PolicyAlgo):
         # replace all BatchNorm with GroupNorm to work with EMA
         # performance will tank if you forget to do this!
         obs_encoder = replace_bn_with_gn(obs_encoder)
+        # print(f"DP: obs_encoder shapes: {obs_encoder}")
         
+        ### << This breaks everything 
+        # because it changes output shape(), which returns self.out_size, which is fixed to 512
+        # to combo_output_shape (returns actual feature output dim, 1033))
         obs_dim = obs_encoder.output_shape()[0]
+        # obs_dim = obs_encoder.combo_output_shape()
+        ###
+
+        # print(f"DP obs_encoder shape: {obs_encoder.output_shape()}")
+        # print(f"DP obs_encoder combo shape: {obs_encoder.combo_output_shape()}")
+        # print(f"DP obs_dim: {obs_dim}")
+        # print(f"DP global_cond_dim: {obs_dim*self.algo_config.horizon.observation_horizon}")
 
         # create network object
         noise_pred_net = ConditionalUnet1D(
@@ -232,12 +244,16 @@ class DiffusionPolicyUNet(PolicyAlgo):
                 if "raw" in k:
                     continue
                 # first two dimensions should be [B, T] for inputs
+                # print(f"DP: input shape: {inputs['obs'][k].shape}")
+                # print(f"DP: class expected shapes {self.obs_shapes[k]}")
                 assert inputs['obs'][k].ndim - 2 == len(self.obs_shapes[k])
             
+            # print(f"DP: before time distributed nets[policy][obs_encoder]: {self.nets['policy']['obs_encoder']}")
             obs_features = TensorUtils.time_distributed({"obs":inputs["obs"]}, self.nets['policy']['obs_encoder'], inputs_as_kwargs=True)
+            # print(f"DP: after time_distributed: {obs_features.shape}")
             assert obs_features.ndim == 3  # [B, T, D]
             obs_cond = obs_features.flatten(start_dim=1)
-
+            # print(f"DP: after flatten: {obs_cond.shape}")
             num_noise_samples = self.algo_config.noise_samples
 
             # sample noise to add to actions
@@ -257,7 +273,9 @@ class DiffusionPolicyUNet(PolicyAlgo):
 
             obs_cond = obs_cond.repeat(num_noise_samples, 1)
             timesteps = timesteps.repeat(num_noise_samples)
-            
+            # print(f"DPU: noisy_actions shape: {noisy_actions.shape}")
+            # print(f"DPU: obs_cond shape: {obs_cond.shape}")    
+            # print(f"DP: noise resid pred, obs_cond shape: {obs_cond.shape}")
             # predict the noise residual
             noise_pred = self.nets['policy']['noise_pred_net'](
                 noisy_actions, timesteps, global_cond=obs_cond)
@@ -437,10 +455,10 @@ class DiffusionPolicyUNet(PolicyAlgo):
         print(f"len shapes: {len(self.obs_shapes[k])} shape: {self.obs_shapes[k]}")
         assert obs_features.ndim == 3  # [B, T, D]
         B = obs_features.shape[0]
-
+        print(f"DP: obs_features shape: {obs_features.shape}")
         # reshape observation to (B,obs_horizon*obs_dim)
         obs_cond = obs_features.flatten(start_dim=1)
-
+        print(f"DP: obs_cond shape: {obs_cond.shape}")
 
         # initialize action from Guassian noise
         noisy_action = torch.randn(

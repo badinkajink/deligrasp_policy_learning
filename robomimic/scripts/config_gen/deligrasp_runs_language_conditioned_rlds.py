@@ -50,7 +50,7 @@ def make_generator_helper(args):
         key="train.num_epochs",
         name="",
         group=-1,
-        values=[91],
+        values=[30],
     )
 
     generator.add_param(
@@ -376,6 +376,18 @@ def make_generator_helper(args):
             ],
             hidename=True,
         )
+        generator.add_param(
+            key="observation.encoder.rgb.core_kwargs.pool_class",
+            name="poolclass",
+            group=1234,
+            values=[
+                # "SpatialSoftmax",
+                None,
+                # None
+            ],
+            hidename=True,
+        )
+
         generator.add_param(
             key="observation.encoder.rgb.core_kwargs.flatten",
             name="flatten",

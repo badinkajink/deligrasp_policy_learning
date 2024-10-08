@@ -50,7 +50,7 @@ def make_generator_helper(args):
         key="train.num_epochs",
         name="",
         group=-1,
-        values=[50],
+        values=[30],
     )
 
     generator.add_param(

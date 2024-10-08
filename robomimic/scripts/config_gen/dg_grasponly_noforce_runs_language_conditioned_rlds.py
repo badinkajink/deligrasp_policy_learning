@@ -17,7 +17,7 @@ EXP_NAMES = OrderedDict(
         # Note: you can add co-training dataset here appending
         # a new dataset to "datasets" and adjusting "sample_weights"
         # accordingly
-        ("droid", {"datasets": ["droid_100"],
+        ("deligrasp_grasponly_noforce", {"datasets": ["deligrasp_dataset_grasponly"],
                    "sample_weights": [1]})                                    
     ])
 
@@ -42,7 +42,7 @@ def make_generator_helper(args):
         name="",
         group=-1,
         values=[
-            "droid_rlds"
+            "dg_rlds_grasponly_noforce"
         ],
     )
 
@@ -50,9 +50,9 @@ def make_generator_helper(args):
         key="train.num_epochs",
         name="",
         group=-1,
-        values=[2],
+        values=[30],
     )
-    
+
     generator.add_param(
         key="experiment.epoch_every_n_steps",
         name="",
@@ -64,7 +64,7 @@ def make_generator_helper(args):
         key="experiment.save.every_n_epochs",
         name="",
         group=-1,
-        values=[1],
+        values=[10],
     )
 
     generator.add_param(
@@ -78,7 +78,7 @@ def make_generator_helper(args):
         key="train.shuffle_buffer_size",
         name="",
         group=-1,
-        values=[100],
+        values=[250],
     )
 
     generator.add_param(
@@ -94,7 +94,7 @@ def make_generator_helper(args):
         name="subsample_length",
         group=7070707,
         values=[
-            50
+            25
         ],
         hidename=True,
     )
@@ -158,8 +158,55 @@ def make_generator_helper(args):
         ],
         hidename=True,
     )
-
     if args.env == "droid":
+        generator.add_param(
+            key="train.action_config",
+            name="",
+            group=-1,
+            values=[
+                {
+                    "action/cartesian_position":{
+                        "normalization": "min_max",
+                    },
+                    "action/abs_pos":{
+                        "normalization": "min_max",
+                    },
+                    "action/abs_rot_6d":{
+                        "normalization": "min_max",
+                        "format": "rot_6d",
+                        "convert_at_runtime": "rot_euler",
+                    },
+                    "action/abs_rot_euler":{
+                        "normalization": "min_max",
+                        "format": "rot_euler",
+                    },
+                    "action/gripper_position":{
+                        "normalization": None,
+                    },
+                    "action/gripper_force":{
+                        "normalization": None,
+                    },
+                    "action/cartesian_velocity":{
+                        "normalization": None,
+                    },
+                    "action/rel_pos":{
+                        "normalization": None,
+                    },
+                    "action/rel_rot_6d":{
+                        "format": "rot_6d",
+                        "normalization": None,
+                        "convert_at_runtime": "rot_euler",
+                    },
+                    "action/rel_rot_euler":{
+                        "format": "rot_euler",
+                        "normalization": None,
+                    },
+                    "action/gripper_velocity":{
+                        "normalization": None,
+                    },
+                }
+            ],
+        )
         generator.add_param(
             key="train.sample_weights",
             name="sample_weights",
@@ -183,13 +230,12 @@ def make_generator_helper(args):
             group=-1,
             values=[
                 [
-                    "action/abs_pos",
-                    "action/abs_rot_6d",
                     "action/gripper_position",
+                    "action/gripper_force",
                 ],
             ],
             value_names=[
-                "abs",
+                "rel",
             ],
             hidename=True,
         )
@@ -199,8 +245,7 @@ def make_generator_helper(args):
             group=-1,
             values=[
                 [
-                    (1, 3),
-                    (1, 6),
+                    (1, 1),
                     (1, 1),
                 ],
             ],
@@ -223,20 +268,10 @@ def make_generator_helper(args):
             name="cams",
             group=130,
             values=[
-                # ["camera/image/hand_camera_left_image"],
-                # ["camera/image/hand_camera_left_image", "camera/image/hand_camera_right_image"],
                 ["camera/image/varied_camera_1_left_image", "camera/image/varied_camera_2_left_image"],
-                # [
-                    # "camera/image/hand_camera_left_image", "camera/image/hand_camera_right_image",
-                #     "camera/image/varied_camera_1_left_image", "camera/image/varied_camera_1_right_image",
-                #     "camera/image/varied_camera_2_left_image", "camera/image/varied_camera_2_right_image",
-                # ],
             ],
             value_names=[
-                # "wrist",
-                # "wrist-stereo",
-                "2cams",
-                # "3cams-stereo",
+                "workspace_wrist",
             ]
         )
         generator.add_param(
@@ -285,7 +320,8 @@ def make_generator_helper(args):
             name="ldkeys",
             group=24986,
             values=[
-                ["robot_state/cartesian_position", "robot_state/gripper_position"],
+                ["robot_state/gripper_position", 
+                 "robot_state/applied_force", "robot_state/contact_force"],
             ],
             value_names=[
                 "proprio-lang",
@@ -367,7 +403,6 @@ def make_generator_helper(args):
             ],
             hidename=False,
         )
-
     else:
         raise ValueError
     

@@ -113,6 +113,8 @@ def obs_encoder_factory(
             net_class = enc_kwargs["core_class"]
             net_kwargs = enc_kwargs["core_kwargs"]
 
+        # print(f"Obs Encoder Factory: name: {k}\n shape: {obs_shape}\n input maps {input_maps}\n net_class: {net_class}\n net_kwargs: {net_kwargs} {randomizers} {share}")
+
         enc.register_obs_key(
             name=k,
             shape=obs_shape,
@@ -124,6 +126,7 @@ def obs_encoder_factory(
         )
 
     enc.make()
+    # print(f"Obs Encoder Factory: {enc}")
     return enc
 
 
@@ -374,6 +377,7 @@ class ObservationEncoder(Module):
 
         output = self.final_collation(feats)
         # concatenate all features together
+        # print(f"Individual Obs Encocder: output shape: {output.shape}")
         return output
 
     def output_shape(self, input_shape=None):
@@ -383,18 +387,24 @@ class ObservationEncoder(Module):
         feat_dim = 0
         for k in self.obs_shapes:
             # If the fuser is not None for image features, don't naively concatenate flattened shapes
+            # print(f"Obs Encoder: output_shape: key: {k}")
             if (self.fuser is not None) and ("image" in k):
                 continue
             feat_shape = self.obs_shapes[k]
+            # print(f"Obs Encoder: output_shape: shape k: {feat_shape}")
             for rand in self.obs_randomizers[k]:
                 if rand is not None:
                     feat_shape = rand.output_shape_in(feat_shape)
             if self.obs_nets[k] is not None:
                 feat_shape = self.obs_nets[k].output_shape(feat_shape)
+                # print(f"Obs Encoder: output_shape: obs_nets[k].output_shape: {feat_shape}")
             for rand in self.obs_randomizers[k]:
                 if rand is not None:
                     feat_shape = rand.output_shape_out(feat_shape)
+                    # print(f"Obs Encoder: output_shape: rand.output_shape_out: {feat_shape}")
+            # print(f"Obs Encoder: output_shape: final shape: {feat_shape}")
             feat_dim += int(np.prod(feat_shape))
+            # print(f"Obs Encoder: output_shape: final dim: {feat_dim}")
         if self.fuser is not None:
             feat_dim += 2048
         return [feat_dim]
@@ -542,6 +552,7 @@ class ObservationGroupEncoder(Module):
         assert isinstance(observation_group_shapes, OrderedDict)
         assert np.all([isinstance(observation_group_shapes[k], OrderedDict) for k in observation_group_shapes])
         
+        # print(f"Obs Nets: {observation_group_shapes}")
         self.observation_group_shapes = observation_group_shapes
 
         # create an observation encoder per observation group
@@ -583,17 +594,31 @@ class ObservationGroupEncoder(Module):
         assert set(self.observation_group_shapes.keys()).issubset(inputs), "{} does not contain all observation groups {}".format(
             list(inputs.keys()), list(self.observation_group_shapes.keys())
         )
+        # print(f"OGE: inputs keys: {inputs.keys()}")
+        # print(f"OGE: inputs['obs'] keys: {inputs['obs'].keys()}")
+        # print(f"OGE: obs_group_shapes keys: {self.observation_group_shapes.keys()}")
+        # print(f"OGE: obs_group_shapes: {self.observation_group_shapes}")
 
         outputs = []
         # Deterministic order since self.observation_group_shapes is OrderedDict
         for obs_group in self.observation_group_shapes:
+            # on god i swear it's here
+            # print(f"OGE: obs_group iter : {obs_group}")
+            output = self.nets[obs_group](inputs[obs_group])
+            # print(f"OGE: inputs[obs_group]: {inputs[obs_group]}")
+            # print(f"OGE: nets[obs_group]: {self.nets[obs_group]}")
+            # print(f"OGE: encoder output iter: {output}")
+            # print(f"OGE: encoder output shape iter: {output.shape}")
             # pass through encoder
             outputs.append(
                 self.nets[obs_group].forward(inputs[obs_group])
             )
 
+        # print(f"OGE: outputs list len: {len(outputs)}")
         combo = torch.cat(outputs, dim=-1)
+        # print(f"OGE: combo shape: {combo.shape}")
         out = self.combine(combo)
+        # print(f"OGE: out shape: {out.shape}")
         return out
 
     def combo_output_shape(self):

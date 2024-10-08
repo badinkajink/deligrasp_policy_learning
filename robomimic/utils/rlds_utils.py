@@ -23,6 +23,19 @@ def mat_to_rot6d(mat):
     r6_flat = tf.concat([r6_0, r6_1], axis=-1)
     return r6_flat
 
+def dg_transform(trajectory: Dict[str, Any], ds_format="dg_rlds") -> Dict[str, Any]:
+    print(f"RLDS Utils: dg_transform: ds_format: {ds_format}")
+    T = trajectory["action_dict"]["cartesian_position"][:, :3]
+    R = mat_to_rot6d(euler_to_rmat(trajectory["action_dict"]["cartesian_position"][:, 3:6]))
+    action = [trajectory["action_dict"]["gripper_position"]]
+    if "noforce" not in ds_format:
+        action.append(trajectory["action_dict"]["gripper_force"])
+    if "grasponly" not in ds_format:
+        action = [T, R] + action
+    trajectory["action"] = tf.concat(action, axis=-1,)
+    return trajectory
+
+
 def dg_dataset_transform(trajectory: Dict[str, Any]) -> Dict[str, Any]:
     T = trajectory["action_dict"]["cartesian_position"][:, :3]
     R = mat_to_rot6d(euler_to_rmat(trajectory["action_dict"]["cartesian_position"][:, 3:6]))
@@ -32,6 +45,26 @@ def dg_dataset_transform(trajectory: Dict[str, Any]) -> Dict[str, Any]:
             R,
             trajectory["action_dict"]["gripper_position"],
             trajectory["action_dict"]["gripper_force"],
+        ),
+        axis=-1,
+    )
+    return trajectory
+
+def dg_grasponly_dataset_transform(trajectory: Dict[str, Any]) -> Dict[str, Any]:
+    trajectory["action"] = tf.concat(
+        (
+            trajectory["action_dict"]["gripper_position"],
+            trajectory["action_dict"]["gripper_force"],
+        ),
+        axis=-1,
+    )
+    return trajectory
+
+def dg_grasponly_noforce_dataset_transform(trajectory: Dict[str, Any]) -> Dict[str, Any]:
+    trajectory["action"] = tf.concat(
+        (
+            trajectory["action_dict"]["gripper_position"],
+            trajectory["action_dict"]["gripper_position"],
         ),
         axis=-1,
     )
@@ -65,22 +98,26 @@ def droid_dataset_transform(trajectory: Dict[str, Any]) -> Dict[str, Any]:
     )
     return trajectory
 
-def robomimic_dg_transform(trajectory: Dict[str, Any]) -> Dict[str, Any]:
-    return {
+def robomimic_dg_transform(trajectory: Dict[str, Any], ds_format="dg_rlds") -> Dict[str, Any]:
+    print(f"RLDS Utils: robomimic_dg_transform: ds_format: {ds_format}")
+    dict = {
         "obs": {
-            "camera/image/varied_camera_1_left_image": 
-                tf.cast(trajectory["observation"]["image_primary"], tf.float32) / 255.,
-            "camera/image/varied_camera_2_left_image": 
-                tf.cast(trajectory["observation"]["image_secondary"], tf.float32) / 255.,
-            "raw_language": trajectory["task"]["language_instruction"],
-            "robot_state/cartesian_position": trajectory["observation"]["proprio"][..., :6],
-            "robot_state/gripper_position": trajectory["observation"]["proprio"][..., -3:-2],
-            "robot_state/applied_force": trajectory["observation"]["proprio"][..., -2:-1],
-            "robot_state/contact_force": trajectory["observation"]["proprio"][..., -1:],
-            "pad_mask": trajectory["observation"]["pad_mask"][..., None],
-        },
-        "actions": trajectory["action"][1:],
+        "camera/image/varied_camera_1_left_image": 
+            tf.cast(trajectory["observation"]["image_primary"], tf.float32) / 255.,
+        "camera/image/varied_camera_2_left_image": 
+            tf.cast(trajectory["observation"]["image_secondary"], tf.float32) / 255.,
+        "raw_language": trajectory["task"]["language_instruction"],
+        "robot_state/gripper_position": trajectory["observation"]["proprio"][..., -3:-2],
+        "pad_mask": trajectory["observation"]["pad_mask"][..., None],
+    },
+    "actions": trajectory["action"][1:],
     }
+    if "noforce" not in ds_format:
+        dict["obs"]["robot_state/applied_force"] = trajectory["observation"]["proprio"][..., -2:-1]
+        dict["obs"]["robot_state/contact_force"] = trajectory["observation"]["proprio"][..., -1:]
+    if "grasponly" not in ds_format:
+        dict["obs"]["robot_state/cartesian_position"] = trajectory["observation"]["proprio"][..., :6]
+    return dict
 
 def robomimic_transform(trajectory: Dict[str, Any]) -> Dict[str, Any]:
     return {

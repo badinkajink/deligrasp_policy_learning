@@ -948,16 +948,23 @@ def time_distributed(inputs, op, activation=None, inputs_as_kwargs=False, inputs
     Returns:
         outputs (dict or list or tuple): new nested dict-list-tuple with tensors of leading dimension [B, T].
     """
+    # # print(f"TU: inputs: {inputs['obs']}")
     batch_size, seq_len = flatten_nested_dict_list(inputs)[0][1].shape[:2]
+    # print(f"TU: batch_size={batch_size}, seq_len={seq_len}")
     inputs = join_dimensions(inputs, 0, 1)
+    # # print(f"TU: op: {op}")
     if inputs_as_kwargs:
         outputs = op(**inputs, **kwargs)
     elif inputs_as_args:
         outputs = op(*inputs, **kwargs)
     else:
         outputs = op(inputs, **kwargs)
-
+    # print(f"TU: outputs.shape={outputs.shape}")
+    # # print(f"TU: outputs={outputs}")
     if activation is not None:
         outputs = map_tensor(outputs, activation)
     outputs = reshape_dimensions(outputs, begin_axis=0, end_axis=0, target_dims=(batch_size, seq_len))
+    # print(f"TU: after reshape outputs.shape={outputs.shape}")
+    # # print(f"TU: outputs={outputs}")
+
     return outputs

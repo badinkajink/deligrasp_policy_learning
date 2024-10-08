@@ -44,7 +44,7 @@ from robomimic.utils.dataset import action_stats_to_normalization_stats
 from robomimic.config import config_factory
 from robomimic.algo import algo_factory, RolloutPolicy
 from robomimic.utils.log_utils import PrintLogger, DataLogger, flush_warnings
-from robomimic.utils.rlds_utils import droid_dataset_transform, dg_dataset_transform, robomimic_transform, robomimic_dg_transform, dg_noforce_dataset_transform, DROID_TO_RLDS_OBS_KEY_MAP, DROID_TO_RLDS_LOW_DIM_OBS_KEY_MAP, DG_TO_RLDS_OBS_KEY_MAP, DG_TO_RLDS_LOW_DIM_OBS_KEY_MAP, TorchRLDSDataset
+from robomimic.utils.rlds_utils import droid_dataset_transform, dg_transform, dg_dataset_transform, robomimic_transform, robomimic_dg_transform, dg_noforce_dataset_transform, dg_grasponly_dataset_transform, dg_grasponly_noforce_dataset_transform, DROID_TO_RLDS_OBS_KEY_MAP, DROID_TO_RLDS_LOW_DIM_OBS_KEY_MAP, DG_TO_RLDS_OBS_KEY_MAP, DG_TO_RLDS_LOW_DIM_OBS_KEY_MAP, TorchRLDSDataset
 
 from octo.data.dataset import make_dataset_from_rlds, make_interleaved_dataset
 from octo.data.utils.data_utils import combine_dataset_statistics
@@ -79,7 +79,7 @@ def train(config, device):
 
     ds_format = config.train.data_format
 
-    if ds_format == "dg_rlds" or ds_format == "dg_rlds_noforce":
+    if "dg_rlds" in ds_format:
         # # load basic metadata from training file
         # print("\n============= Loaded Environment Metadata =============")
         # env_meta = FileUtils.get_env_metadata_from_dataset(dataset_path=None, ds_format=ds_format)
@@ -95,6 +95,16 @@ def train(config, device):
         ac_dim = sum([ac_comp[1] for ac_comp in config.train.action_shapes])
         action_config = config.train.action_config
         is_abs_action = [False] * ac_dim
+        # standardize_fn = dg_transform
+        standardize_fn = None
+        if ds_format == "dg_rlds":
+            standardize_fn = dg_dataset_transform
+        elif ds_format == "dg_rlds_noforce":
+            standardize_fn = dg_noforce_dataset_transform
+        elif ds_format == "dg_rlds_grasponly":
+            standardize_fn = dg_grasponly_dataset_transform
+        elif ds_format == "dg_rlds_grasponly_noforce":
+            standardize_fn = dg_grasponly_noforce_dataset_transform
 
         BASE_DATASET_KWARGS = {
                 "data_dir": config.train.data_path,
@@ -103,9 +113,10 @@ def train(config, device):
                 "language_key": "language_instruction",
                 "norm_skip_keys":  ["proprio"],
                 "action_proprio_normalization_type": "bounds",
-                "absolute_action_mask": is_abs_action if ds_format == "dg_rlds" else None, # dg is relative actions
-                "action_normalization_mask": is_abs_action if ds_format == "dg_rlds" else None, # dg is relative actions
-                "standardize_fn": dg_dataset_transform if ds_format == "dg_rlds" else dg_noforce_dataset_transform,
+                "absolute_action_mask": is_abs_action,
+                "action_normalization_mask": is_abs_action, # dg is relative actions
+                # "standardize_fn": lambda x: standardize_fn(x, ds_format=ds_format),
+                "standardize_fn": standardize_fn,
          }
 
         dataset_names = config.train.dataset_names
@@ -150,7 +161,7 @@ def train(config, device):
         rlds_dataset_stats = dataset.dataset_statistics[0] if isinstance(dataset.dataset_statistics, list) else dataset.dataset_statistics
         action_stats = ActionUtils.get_action_stats_dict(rlds_dataset_stats["action"], config.train.action_keys, config.train.action_shapes)
         action_normalization_stats = action_stats_to_normalization_stats(action_stats, action_config)
-        dataset = dataset.map(robomimic_dg_transform, num_parallel_calls=config.train.traj_transform_threads)
+        dataset = dataset.map(lambda x: robomimic_dg_transform(x, ds_format=ds_format), num_parallel_calls=config.train.traj_transform_threads)
 
         pytorch_dataset = TorchRLDSDataset(dataset)
         train_loader = DataLoader(
@@ -636,7 +647,7 @@ def main(args):
     else:
         config = config_factory(args.algo)
 
-    if config.train.data_format != "droid_rlds" and config.train.data_format != "dg_rlds" and config.train.data_format != "dg_rlds_noforce" and args.dataset is not None:
+    if config.train.data_format != "droid_rlds" and "dg_rlds" not in config.train.data_format and args.dataset is not None:
         config.train.data = args.dataset
 
     if args.name is not None:
