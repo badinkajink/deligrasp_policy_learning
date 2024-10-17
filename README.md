@@ -1,8 +1,9 @@
-# DROID Policy Learning and Evaluation
+# DeliGrasp Policy Learning and Evaluation
 
-This repository contains code for training and evaluating policies on the [DROID](https://droid-dataset.github.io) dataset. DROID is a large-scale, in-the-wild robot manipulation dataset. This codebase is built as a fork of [`robomimic`](https://robomimic.github.io/), a popular repository for imitation learning algorithm development. For more information about DROID, please see the following links: 
+This repository contains code for training and evaluating policies on [grasp force feedback datasets](https://justaddforce.github.io) dataset. This codebase and following README is adapted from [DROID Policy Learning](https://github.com/droid-dataset/droid_policy_learning), which itself is built as a fork of [`robomimic`](https://robomimic.github.io/), a popular repository for imitation learning algorithm development 
 
-[**[Homepage]**](https://droid-dataset.github.io) &ensp; [**[Documentation]**](https://droid-dataset.github.io/droid) &ensp; [**[Paper]**](https://arxiv.org/abs/2403.12945) &ensp; [**[Dataset Visualizer]**](https://droid-dataset.github.io/dataset.html).
+<!-- [**[Homepage]**](https://droid-dataset.github.io) &ensp; [**[Documentation]**](https://droid-dataset.github.io/droid) &ensp; [**[Paper]**](https://arxiv.org/abs/2403.12945) &ensp; [**[Dataset Visualizer]**](https://droid-dataset.github.io/dataset.html). -->
+[**[Homepage]**](https://justaddforce.github.io)
 
 -------
 ## Installation
@@ -11,36 +12,16 @@ Create a python3 conda environment (tested with Python 3.10) and run the followi
 1. Create python 3.10 conda environment: `conda create --name droid_policy_learning_env python=3.10`
 2. Activate the conda environment: `conda activate droid_policy_learning_env`
 3. Install [octo](https://github.com/octo-models/octo/tree/main), pinned at commit `85b83fc19657ab407a7f56558a5384ae56fe453b` (used for data loading)
-4. Run `pip install -e .` in `droid_policy_learning`.
+4. In `octo`, `git reset --hard 85b83fc` before pip installing.
+5. Back here, run `pip install -e .` in `droid_policy_learning`.
 
-With this you are all set up for training policies on DROID. If you want to evaluate your policies on a real robot DROID setup, 
-please install the DROID robot controller in the same conda environment (follow the instructions [here](https://github.com/droid-dataset/droid)).
-
--------
-## Preparing Datasets
-We provide all DROID datasets in RLDS format, which makes it easy to co-train with various other robot-learning datasets (such as those in the [Open X-Embodiment](https://robotics-transformer-x.github.io/)).
-
-To download the DROID dataset from the Google cloud bucket, install the [gsutil package](https://cloud.google.com/storage/docs/gsutil_install) and run the following command (Note: the full dataset is 1.7TB in size):
-```
-gsutil -m cp -r gs://gresearch/robotics/droid <path_to_your_target_dir>
-```
-
-We also provide a small (2GB) example dataset with 100 DROID trajectories that uses the same format as the full RLDS dataset and can be used for code prototyping and debugging:
-```
-gsutil -m cp -r gs://gresearch/robotics/droid_100 <path_to_your_target_dir>
-```
-
-For good performance of DROID policies in your target setting, it is helpful to include a small number of demonstrations in your target domain into the training mix ("co-training"). 
-Please follow the instructions [here](https://droid-dataset.github.io/droid/example-workflows/data-collection.html) for collecting a small teleoperated dataset in your target domain and instructions [here](https://github.com/kpertsch/droid_dataset_builder) converting it to the RLDS training format.
-Make sure that all datasets you want to train on are under the same root directory `DATA_PATH`.
-
-*Note*: We also provide the raw DROID dataset at stereo, full HD resolution. If your training pipeline requires this information, you can download the dataset from `gs://gresearch/robotics/droid_raw`. For a detailed description of the raw data format, please see our [developer documentation](https://droid-dataset.github.io/droid).
+With this you are all set up for training policies.
 
 -------
 ## Training
-To train policies, update `DATA_PATH`, `EXP_LOG_PATH`, and `EXP_NAMES` in `robomimic/scripts/config_gen/droid_runs_language_conditioned_rlds.py` and then run:
+To train policies, update `DATA_PATH`, `EXP_LOG_PATH`, and `EXP_NAMES` in `robomimic/scripts/config_gen/deligrasp_runs_language_conditioned_rlds.py` and then run:
 
-`python robomimic/scripts/config_gen/droid_runs_language_conditioned_rlds.py --wandb_proj_name <WANDB_PROJ_NAME>`
+`python robomimic/scripts/config_gen/deligrasp_runs_language_conditioned_rlds.py --wandb_proj_name <WANDB_PROJ_NAME>`
 
 This will generate a python command that can be run to launch training. You can also update other training parameters within `robomimic/scripts/config_gen/droid_runs_language_conditioned_rlds.py`. Please see the `robomimic` documentation for more information on how `robomimic` configs are defined. The three
 most important parameters in this file are:
@@ -73,25 +54,4 @@ We also provide a stand-alone example to load data from DROID [here](examples/dr
 -------
 
 ## Evaluating Trained Policies
-To evaluate policies, make sure that you additionally install [DROID](https://github.com/droid-dataset/droid) in your conda environment and then run:
-```python
-python scripts/evaluation/evaluate_policy.py
-```
-from the DROID root directory. Make sure to use the appropriate command line arguments for the model checkpoint path and whether to do goal or language conditioning, and then follow
-all resulting prompts in the terminal. To replicate experiments from the paper, use the language conditioning mode.
-
--------
-
-## Training Policies with HDF5 Format
-Natively, robomimic uses HDF5 files to store and load data. While we mainly support RLDS as the data format for training with DROID, [here](README_hdf5.md) are instructions for how to run training with the HDF5 data format.
-
-------------
-## Citation
-
-```
-@misc{droid_2024,
-    title={DROID: A Large-Scale In-The-Wild Robot Manipulation Dataset},
-    author  = {Alexander Khazatsky and Karl Pertsch and Suraj Nair and Ashwin Balakrishna and Sudeep Dasari and Siddharth Karamcheti and Soroush Nasiriany and Mohan Kumar Srirama and Lawrence Yunliang Chen and Kirsty Ellis and Peter David Fagan and Joey Hejna and Masha Itkina and Marion Lepert and Yecheng Jason Ma and Patrick Tree Miller and Jimmy Wu and Suneel Belkhale and Shivin Dass and Huy Ha and Arhan Jain and Abraham Lee and Youngwoon Lee and Marius Memmel and Sungjae Park and Ilija Radosavovic and Kaiyuan Wang and Albert Zhan and Kevin Black and Cheng Chi and Kyle Beltran Hatch and Shan Lin and Jingpei Lu and Jean Mercat and Abdul Rehman and Pannag R Sanketi and Archit Sharma and Cody Simpson and Quan Vuong and Homer Rich Walke and Blake Wulfe and Ted Xiao and Jonathan Heewon Yang and Arefeh Yavary and Tony Z. Zhao and Christopher Agia and Rohan Baijal and Mateo Guaman Castro and Daphne Chen and Qiuyu Chen and Trinity Chung and Jaimyn Drake and Ethan Paul Foster and Jensen Gao and David Antonio Herrera and Minho Heo and Kyle Hsu and Jiaheng Hu and Donovon Jackson and Charlotte Le and Yunshuang Li and Kevin Lin and Roy Lin and Zehan Ma and Abhiram Maddukuri and Suvir Mirchandani and Daniel Morton and Tony Nguyen and Abigail O'Neill and Rosario Scalise and Derick Seale and Victor Son and Stephen Tian and Emi Tran and Andrew E. Wang and Yilin Wu and Annie Xie and Jingyun Yang and Patrick Yin and Yunchu Zhang and Osbert Bastani and Glen Berseth and Jeannette Bohg and Ken Goldberg and Abhinav Gupta and Abhishek Gupta and Dinesh Jayaraman and Joseph J Lim and Jitendra Malik and Roberto Martín-Martín and Subramanian Ramamoorthy and Dorsa Sadigh and Shuran Song and Jiajun Wu and Michael C. Yip and Yuke Zhu and Thomas Kollar and Sergey Levine and Chelsea Finn},
-    year = {2024},
-}
-```
+WIP. Evaluation is all local on real hardware. 
