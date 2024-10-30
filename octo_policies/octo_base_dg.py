@@ -20,12 +20,12 @@ from octo.utils.train_utils import (
 )
 
 DATA_PATH = "C:/Users/willi/tensorflow_datasets/"    # UPDATE WITH PATH TO RLDS DATASETS
-EXP_LOG_PATH = "C:/workspace/deligrasp_policy_learning/logs/octo_small_1.5" # UPDATE WITH PATH TO DESIRED LOGGING DIRECTORY
+EXP_LOG_PATH = "C:/workspace/deligrasp_policy_learning/logs/octo_base_1.5" # UPDATE WITH PATH TO DESIRED LOGGING DIRECTORY
 OCTO_CKPT_SMALL = "C:/Users/willi/.cache/huggingface/hub/models--rail-berkeley--octo-small-1.5/snapshots/dc9aa3019f764726c770814b27e4ab0fc6e32a58"
 OCTO_CKPT_BASE = "C:/Users/willi/.cache/huggingface/hub/models--rail-berkeley--octo-base-1.5/snapshots/ee3c10e8edd6ce2e8b1e8744d3c6fba4097bed48"
 
 DATA_PATH = "/mnt/c/Users/willi/tensorflow_datasets/"
-EXP_LOG_PATH = "/mnt/c/workspace/deligrasp_policy_learning/logs/octo_small_1.5"
+EXP_LOG_PATH = "/mnt/c/workspace/deligrasp_policy_learning/logs/octo_base_1.5"
 OCTO_CKPT_SMALL = "/mnt/c/Users/willi/.cache/huggingface/hub/models--rail-berkeley--octo-small-1.5/snapshots/dc9aa3019f764726c770814b27e4ab0fc6e32a58"
 OCTO_CKPT_BASE = "/mnt/c/Users/willi/.cache/huggingface/hub/models--rail-berkeley--octo-base-1.5/snapshots/ee3c10e8edd6ce2e8b1e8744d3c6fba4097bed48"
 
@@ -33,12 +33,12 @@ FLAGS = flags.FLAGS
 
 flags.DEFINE_string("f", "", "notebook path hack.")
 flags.DEFINE_string(
-    "pretrained_path",OCTO_CKPT_SMALL, "Path to pre-trained Octo checkpoint directory."
+    "pretrained_path",OCTO_CKPT_BASE, "Path to pre-trained Octo checkpoint directory."
 )
 flags.DEFINE_string("data_dir", DATA_PATH, "Path to finetuning dataset, in RLDS format.")
 flags.DEFINE_string("save_dir", EXP_LOG_PATH, "Directory for saving finetuning checkpoints.")
 # flags.DEFINE_integer("verbosity", 0, "0 is info, 1 is debug. not having this flag is breaking jax")
-flags.DEFINE_integer("batch_size", 8, "Batch size for finetuning.")
+flags.DEFINE_integer("batch_size", 4, "Batch size for finetuning.")
 flags.DEFINE_bool(
     "freeze_transformer",
     True,
@@ -57,7 +57,7 @@ def main(_):
     tf.config.set_visible_devices([], "GPU")
 
     # setup wandb for logging
-    wandb.init(name="octo_sm_dg", project="jaf")
+    wandb.init(name="octo_ba_dg", project="jaf")
 
     # load pre-trained model
     logging.info("Loading pre-trained model...")
