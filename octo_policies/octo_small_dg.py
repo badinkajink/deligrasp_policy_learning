@@ -79,7 +79,7 @@ def main(_):
         traj_transform_kwargs=dict(
             window_size=2,
             action_horizon=8,
-            subsample_length=20,
+            subsample_length=50,
 
         ),
         frame_transform_kwargs=dict(
