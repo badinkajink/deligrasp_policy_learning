@@ -37,7 +37,7 @@ flags.DEFINE_string(
 )
 flags.DEFINE_string("data_dir", DATA_PATH, "Path to finetuning dataset, in RLDS format.")
 flags.DEFINE_string("save_dir", EXP_LOG_PATH, "Directory for saving finetuning checkpoints.")
-flags.DEFINE_integer("verbosity", 0, "0 is info, 1 is debug. not having this flag is breaking jax")
+# flags.DEFINE_integer("verbosity", 0, "0 is info, 1 is debug. not having this flag is breaking jax")
 flags.DEFINE_integer("batch_size", 16, "Batch size for finetuning.")
 flags.DEFINE_bool(
     "freeze_transformer",
