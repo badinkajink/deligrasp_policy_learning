@@ -44,7 +44,7 @@ from robomimic.utils.dataset import action_stats_to_normalization_stats
 from robomimic.config import config_factory
 from robomimic.algo import algo_factory, RolloutPolicy
 from robomimic.utils.log_utils import PrintLogger, DataLogger, flush_warnings
-from robomimic.utils.rlds_utils import droid_dataset_transform, dg_transform, dg_dataset_transform, robomimic_transform, robomimic_dg_transform, dg_noforce_dataset_transform, dg_grasponly_dataset_transform, dg_grasponly_noforce_dataset_transform, DROID_TO_RLDS_OBS_KEY_MAP, DROID_TO_RLDS_LOW_DIM_OBS_KEY_MAP, DG_TO_RLDS_OBS_KEY_MAP, DG_TO_RLDS_LOW_DIM_OBS_KEY_MAP, TorchRLDSDataset
+from robomimic.utils.rlds_utils import droid_dataset_transform, dg_transform, dg_dataset_transform, robomimic_transform, robomimic_dg_transform, dg_noforce_dataset_transform, dg_grasponly_dataset_transform, dg_grasponly_noforce_dataset_transform, dg_grasponly_forceonly_dataset_transform, DROID_TO_RLDS_OBS_KEY_MAP, DROID_TO_RLDS_LOW_DIM_OBS_KEY_MAP, DG_TO_RLDS_OBS_KEY_MAP, DG_TO_RLDS_LOW_DIM_OBS_KEY_MAP, TorchRLDSDataset
 
 from octo.data.dataset import make_dataset_from_rlds, make_interleaved_dataset
 from octo.data.utils.data_utils import combine_dataset_statistics
@@ -105,6 +105,8 @@ def train(config, device):
             standardize_fn = dg_grasponly_dataset_transform
         elif ds_format == "dg_rlds_grasponly_noforce":
             standardize_fn = dg_grasponly_noforce_dataset_transform
+        elif ds_format == "dg_rlds_grasponly_forceonly":
+            standardize_fn = dg_grasponly_forceonly_dataset_transform
 
         BASE_DATASET_KWARGS = {
                 "data_dir": config.train.data_path,

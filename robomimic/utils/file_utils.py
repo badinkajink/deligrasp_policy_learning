@@ -244,14 +244,15 @@ def get_shape_metadata_from_dataset(dataset_path, batch, action_keys, all_obs_ke
         shape_meta = {'ac_dim': batch["actions"].shape[-1]}
     elif "dg_rlds" in ds_format:
         all_shapes = OrderedDict()
-        observation = ["robot_state/gripper_position",
-            "camera/image/varied_camera_1_left_image",
-            "camera/image/varied_camera_2_left_image",]
+        observation = ["camera/image/varied_camera_1_left_image",
+                       "camera/image/varied_camera_2_left_image",]
         if "noforce" not in ds_format:
             observation.append("robot_state/applied_force")
             observation.append("robot_state/contact_force")
         if "grasponly" not in ds_format:
             observation.append("robot_state/cartesian_position")
+        if "forceonly" not in ds_format:
+            observation.append("robot_state/gripper_position")
         for k in observation:
             print(f"file_utils: Shape Meta: batch keys {batch['obs'].keys()} ")
             if k in batch["obs"]:

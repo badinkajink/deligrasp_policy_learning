@@ -70,6 +70,16 @@ def dg_grasponly_noforce_dataset_transform(trajectory: Dict[str, Any]) -> Dict[s
     )
     return trajectory
 
+def dg_grasponly_forceonly_dataset_transform(trajectory: Dict[str, Any]) -> Dict[str, Any]:
+    trajectory["action"] = tf.concat(
+        (
+            trajectory["action_dict"]["gripper_force"],
+            trajectory["action_dict"]["gripper_force"],
+        ),
+        axis=-1,
+    )
+    return trajectory
+
 def dg_noforce_dataset_transform(trajectory: Dict[str, Any]) -> Dict[str, Any]:
     T = trajectory["action_dict"]["cartesian_position"][:, :3]
     R = mat_to_rot6d(euler_to_rmat(trajectory["action_dict"]["cartesian_position"][:, 3:6]))
@@ -107,7 +117,6 @@ def robomimic_dg_transform(trajectory: Dict[str, Any], ds_format="dg_rlds") -> D
         "camera/image/varied_camera_2_left_image": 
             tf.cast(trajectory["observation"]["image_secondary"], tf.float32) / 255.,
         "raw_language": trajectory["task"]["language_instruction"],
-        "robot_state/gripper_position": trajectory["observation"]["proprio"][..., -3:-2],
         "pad_mask": trajectory["observation"]["pad_mask"][..., None],
     },
     "actions": trajectory["action"][1:],
@@ -117,6 +126,8 @@ def robomimic_dg_transform(trajectory: Dict[str, Any], ds_format="dg_rlds") -> D
         dict["obs"]["robot_state/contact_force"] = trajectory["observation"]["proprio"][..., -1:]
     if "grasponly" not in ds_format:
         dict["obs"]["robot_state/cartesian_position"] = trajectory["observation"]["proprio"][..., :6]
+    if "forceonly" not in ds_format:
+        dict["obs"]["robot_state/gripper_position"] = trajectory["observation"]["proprio"][..., -3:-2]
     return dict
 
 def robomimic_transform(trajectory: Dict[str, Any]) -> Dict[str, Any]:
