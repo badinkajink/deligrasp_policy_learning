@@ -17,7 +17,7 @@ EXP_NAMES = OrderedDict(
         # Note: you can add co-training dataset here appending
         # a new dataset to "datasets" and adjusting "sample_weights"
         # accordingly
-        ("deligrasp_grasponly_noforce", {"datasets": ["deligrasp_dataset_grasponly"],
+        ("deligrasp_grasponly_forceonly", {"datasets": ["deligrasp_dataset_grasponly"],
                    "sample_weights": [1]})                                    
     ])
 
@@ -42,7 +42,7 @@ def make_generator_helper(args):
         name="",
         group=-1,
         values=[
-            "dg_rlds_grasponly_noforce"
+            "dg_rlds_grasponly"
         ],
     )
 
@@ -50,7 +50,7 @@ def make_generator_helper(args):
         key="train.num_epochs",
         name="",
         group=-1,
-        values=[30],
+        values=[48],
     )
 
     generator.add_param(
@@ -64,7 +64,7 @@ def make_generator_helper(args):
         key="experiment.save.every_n_epochs",
         name="",
         group=-1,
-        values=[10],
+        values=[12],
     )
 
     generator.add_param(
@@ -230,8 +230,8 @@ def make_generator_helper(args):
             group=-1,
             values=[
                 [
-                    "action/gripper_position",
-                    "action/gripper_position",
+                    "action/gripper_force",
+                    "action/gripper_force", # this should be gforce but something is breaking
                 ],
             ],
             value_names=[
@@ -320,26 +320,13 @@ def make_generator_helper(args):
             name="ldkeys",
             group=24986,
             values=[
-                ["robot_state/gripper_position",],
+                ["robot_state/applied_force", "robot_state/applied_force", "robot_state/contact_force"],
             ],
             value_names=[
                 "proprio-lang",
             ],
             hidename=False,
         )
-        # generator.add_param(
-        #     key="observation.modalities.obs.low_dim",
-        #     name="ldkeys",
-        #     group=24986,
-        #     values=[
-        #         ["robot_state/gripper_position", 
-        #          "robot_state/applied_force", "robot_state/contact_force"],
-        #     ],
-        #     value_names=[
-        #         "proprio-lang",
-        #     ],
-        #     hidename=False,
-        # )
         generator.add_param(
             key="observation.encoder.rgb.core_kwargs.backbone_kwargs.use_cam",
             name="",
