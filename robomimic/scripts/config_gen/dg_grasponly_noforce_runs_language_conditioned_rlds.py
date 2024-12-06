@@ -320,7 +320,7 @@ def make_generator_helper(args):
             name="ldkeys",
             group=24986,
             values=[
-                ["robot_state/gripper_position", "robot_state/applied_force", "robot_state/contact_force"],
+                ["robot_state/gripper_position",],
             ],
             value_names=[
                 "proprio-lang",
